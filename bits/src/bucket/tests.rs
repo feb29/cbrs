@@ -1,4 +1,5 @@
-extern crate env_logger;
+// extern crate env_logger;
+
 extern crate rand;
 
 use self::rand::Rng;
@@ -40,23 +41,8 @@ fn bucket_properties() {
 }
 
 #[test]
-fn bucket_from_iter() {
-    let _ = env_logger::init();
-    {
-        let vec = vec![1u16;10000];
-        let bucket = vec.iter().collect::<Bucket>();
-        debug!("{:?} {:?}", bucket, bucket.ones());
-    }
-    {
-        let vec = vec![true;10000];
-        let bucket = vec.iter().collect::<Bucket>();
-        debug!("{:?} {:?}", bucket, bucket.ones());
-    }
-}
-
-#[test]
 fn bucket_insert_remove() {
-    let _ = env_logger::init();
+    // let _ = env_logger::init();
 
     let mut b = Bucket::zero();
     let mut i = 0u16;
@@ -92,7 +78,7 @@ fn bucket_insert_remove() {
     b.optimize();
     assert!(b.repr.is_vec());
 
-    debug!("{:?} {:?}", b, b.ones());
+    assert_eq!(0, b.ones());
 }
 
 fn new_itermap<'a>(bits: &'a [u64]) -> Iter {
@@ -102,7 +88,7 @@ fn new_itermap<'a>(bits: &'a [u64]) -> Iter {
 
 #[test]
 fn test_iter() {
-    let _ = env_logger::init();
+    // let _ = env_logger::init();
     let vec_0 = vec![1|1<<63; 3];
     {
         let mut iter = new_itermap(&vec_0[..]);

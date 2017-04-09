@@ -3,9 +3,6 @@
 
 extern crate test;
 
-#[macro_use]
-extern crate log;
-
 mod broadword;
 use broadword::{Rank, Select};
 
