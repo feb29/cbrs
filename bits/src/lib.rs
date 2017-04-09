@@ -1,63 +1,41 @@
+#![feature(associated_consts)]
 #![feature(test)]
+
 extern crate test;
 
-use std::ops;
-use std::num::Wrapping;
+#[macro_use]
+extern crate log;
 
 mod broadword;
+use broadword::{Rank, Select};
 
-#[derive(Debug, Copy, Clone)]
-struct Bits(u64);
+mod bucket;
 
-impl Bits {
-    fn pop_count(&self) -> usize {
-        self.0.count_ones() as usize
-    }
-    fn rank1(&self, i: usize) -> usize {
-        broadword::rank9(self.0, i)
-    }
-    fn rank0(&self, i: usize) -> usize {
-        broadword::rank9(!self.0, i)
-    }
-    fn select1(&self, c: usize) -> usize {
-        broadword::select9(self.0, c)
-    }
-    fn select0(&self, c: usize) -> usize {
-        broadword::select9(!self.0, c)
-    }
+// Constant sized bits.
+pub trait Bits {
+    const SIZE: usize;
+
+    fn zero() -> Self;
+
+    // Count non-zero bits.
+    // REQUIRES: ones() <= SIZE
+    fn ones(&self) -> usize;
 }
-
-macro_rules! bits_shift_impl {
-    ( $($shift: ty),* ) => ($(
-        impl ops::Shr<$shift> for Bits {
-            type Output = Self;
-            fn shr(self, shift: $shift) -> Self::Output {
-                let Bits(lhs) = self;
-                let Wrapping(r) = Wrapping(lhs) >> shift as usize;
-                Bits(r)
-            }
-        }
-        impl ops::Shl<$shift> for Bits {
-            type Output = Self;
-            fn shl(self, shift: $shift) -> Self::Output {
-                let Bits(lhs) = self;
-                let Wrapping(r) = Wrapping(lhs) << shift as usize;
-                Bits(r)
+macro_rules! impl_sizedbits {
+    ( $( ($type: ty, $size: expr) ),* ) => ($(
+        impl Bits for $type {
+            const SIZE: usize = $size;
+            fn zero() -> Self { 0 }
+            fn ones(&self) -> usize {
+                let ones = self.count_ones();
+                debug_assert!(ones as usize <= Self::SIZE);
+                ones as usize
             }
         }
     )*)
 }
-
-macro_rules! bits_shift_assign_impl {
-    ( $($shift: ty),* ) => ($(
-        impl ops::ShrAssign<$shift> for Bits {
-            fn shr_assign(&mut self, shift: $shift) { *self = self.clone() >> shift }
-        }
-        impl ops::ShlAssign<$shift> for Bits {
-            fn shl_assign(&mut self, shift: $shift) { *self = self.clone() << shift }
-        }
-    )*)
-}
-
-bits_shift_impl!(u16, u32, u64, usize);
-bits_shift_assign_impl!(u16, u32, u64, usize);
+impl_sizedbits!((u64, 64), (u32, 32), (u16, 16), (u8, 8));
+#[cfg(target_pointer_width = "32")]
+impl_sizedbits!{(usize, 32)}
+#[cfg(target_pointer_width = "64")]
+impl_sizedbits!{(usize, 64)}
