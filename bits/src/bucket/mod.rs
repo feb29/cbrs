@@ -105,13 +105,12 @@ impl Rank for Bucket {
         if i >= Bucket::SIZE {
             return self.ones();
         }
-        match self.repr {
+        let rank = match self.repr {
             Repr::Vec(ref bits) => {
                 let j = i as u16;
                 match bits.binary_search(&j) {
-                    Ok(rank) => rank,
-                    Err(rank) if rank > bits.len() => self.ones(), // rank - 1
-                    Err(rank) => rank,
+                    Err(r) if r > bits.len() => self.ones(), // rank - 1
+                    Err(r) | Ok(r) => r,
                 }
             }
             Repr::Map(ref bits) => {
@@ -120,7 +119,8 @@ impl Rank for Bucket {
                 bits.iter().take(q).fold(0, |acc, w| acc + w.ones()) +
                 bits.get(q).map_or(0, |w| w.rank1(r))
             }
-        }
+        };
+        return rank;
     }
     fn rank0(&self, i: usize) -> usize {
         i - self.rank1(i)
@@ -164,15 +164,9 @@ impl FromIterator<u16> for Bucket {
                 Bucket { popc, repr }
             }
 
-            // max > size
-            (_, Some(max)) => {
-                let mut repr = Repr::Map(Vec::with_capacity(max));
-                let popc = insert_u16_all(iter, &mut repr);
-                Bucket { popc, repr }
-            }
-
-            (min, None) => {
-                let mut repr = Repr::with_capacity(min);
+            (min, maxopt) => {
+                let cmp = maxopt.map_or(min, |max| max);
+                let mut repr = Repr::with_capacity(cmp);
                 let popc = insert_u16_all(iter, &mut repr);
                 let mut bucket = Bucket { popc, repr };
                 bucket.optimize();
