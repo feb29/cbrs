@@ -1,5 +1,5 @@
 [package]
-name    = "bits"
+name    = "broadword"
 version = "0.1.0"
 authors = ["Kohei Watanabe <xbeef29@gmail.com>"]
 
@@ -9,3 +9,5 @@ authors = ["Kohei Watanabe <xbeef29@gmail.com>"]
 # log = "0.3.7"
 # env_logger = "0.4.2"
 rand = "0.3"
+
+[features]
